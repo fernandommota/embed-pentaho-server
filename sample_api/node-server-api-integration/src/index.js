@@ -33,7 +33,7 @@ app.get("/authentication/detail", function(req, res) {
         token: (token === "12345" ? token : null),
         username: "fernandommota",
         roles: [
-            "Authenticated" //, "Power User" , "Administrator"
+            "Authenticated", "Power User", "Administrator"
         ]
     }
 

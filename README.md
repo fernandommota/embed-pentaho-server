@@ -2,6 +2,11 @@
 
 This project it's a sample of how embed the Pentaho server with a 3rd Web APP using a TOKEN hash.
 
+- Video tutorial [pt_BR]
+
+[![Video tutorial [pt_BR]](https://img.youtube.com/vi/2dpNhCOVt7A/0.jpg)](https://www.youtube.com/watch?v=2dpNhCOVt7A)
+
+
 ### References:
 * https://help.pentaho.com/Documentation/8.0/Setup/Administration/User_Security/Implement_Advanced_Security/080
 

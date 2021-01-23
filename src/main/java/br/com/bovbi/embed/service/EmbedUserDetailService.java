@@ -22,10 +22,6 @@ public class EmbedUserDetailService implements UserDetailsService {
     }
 
     /**
-     * TODO analisar condicao com base no "-/pentaho/tenant0"
-     * A principio metodo apenas busca oque esta na sessao
-     * E retorna o {@link EmbedUserDetail}
-
      * @param username
      * @return
      * @throws UsernameNotFoundException

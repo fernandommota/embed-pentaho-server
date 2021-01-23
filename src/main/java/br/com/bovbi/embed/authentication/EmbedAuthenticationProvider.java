@@ -37,12 +37,6 @@ public class EmbedAuthenticationProvider implements AuthenticationProvider {
     }
 
     /**
-     * Sistema pega a sessao do {@link AaiSessionAuthentication#getSession()}
-     * E efetua um REST para validar e obter o usuário logado {@link br.com.bovbi.embed.rest.EmbedRestTemplate#UserLoggedResponse(String sessao)}
-     * Caso Autenticado, classe interna do Pentaho ira criar o IPentahoSession
-     * A Principio Toda sessao {@link org.pentaho.platform.api.engine.IPentahoSession} que eu tento criar/editar aqui é sobrescrita internamente em algum lugar :x  )
-     * O que impossibilita a passagem de mais variaveis por {@link org.pentaho.platform.api.engine.IPentahoSession#setAttribute(String atributo, Object valor)}
-     * TODO descobrir onde esta mudando essa sessao
      *
      * @param authentication
      * @return
@@ -59,6 +53,7 @@ public class EmbedAuthenticationProvider implements AuthenticationProvider {
         if (response.isActive()) {
             LOGGER.error("Authentication success by token!");
             LOGGER.info("" + response);
+            
             // set as a authenticated user
             auth.setAuthenticated(true);
             // set the username
@@ -71,7 +66,7 @@ public class EmbedAuthenticationProvider implements AuthenticationProvider {
             if (!Utils.isNull(response.getRoles()))
                 for (String role : response.getRoles()) {
                     list.add(new EmbedGrantedAuthority(role));
-                    LOGGER.info("User has granted the tole: " + role);
+                    LOGGER.info("User has granted the role: " + role);
                 }
 
             auth.setAuthorities(list);

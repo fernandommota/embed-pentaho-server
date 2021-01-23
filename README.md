@@ -2,19 +2,30 @@
 
 This project it's a sample of how embed the Pentaho server with a 3rd Web APP using a TOKEN hash.
 
-References:
+### References:
 * https://help.pentaho.com/Documentation/8.0/Setup/Administration/User_Security/Implement_Advanced_Security/080
- 
+
+### Credits
+
+Original code by Francisco Gregorio:
+* https://github.com/FranciscoGregorio
+
+Original sponsors:
+* Tribunal de Contas do Estado de Mato Grosso do Sul (TCE-MS)
+* Grupo Imagetech
+
+
 ## Flow Authentication
 1. Authentication filter by token ([EmbedLoginFilter](src/main/java/br/com/bovbi/embed/filter/EmbedLoginFilter.java))
     - http://localhost:8080/pentaho/embed-login?token=MY_TOKEN
 2. Authentication Provider validating the *token* parameter by API rest ([EmbedAuthenticationProvider](src/main/java/br/com/bovbi/embed/authentication/EmbedAuthenticationProvider.java))  
 
 3. APP-API ([EmbedRestTemplate](src/main/java/br/com/bovbi/embed/rest/EmbedRestTemplate.java))  
-3.1. Search the user logged (UserDetails) por login ([EmbedUserDetailService](src/main/java/br/com/bovbi/embed/service/EmbedUserDetailService.java))
+3.1. Search the user logged (UserDetails) by login ([EmbedUserDetailService](src/main/java/br/com/bovbi/embed/service/EmbedUserDetailService.java))
 
+## Build and Installation
 
-## Build
+### Build the Filter
 
 ```
 mvn clean 
@@ -22,9 +33,13 @@ mvn compile
 mvn install
 ```
 
+After the build, copy the `/target/embed-pentaho-1.0.jar` file to pentaho-server/tomcat/webapps/pentaho/WEB-INF/lib/
+
 ### Pentaho Server XML Injection
-No diretório de `pentaho-server\pentaho-solutions\system`  
-Criar um arquivo .xml contendo as injeções por `<bean>`  
+
+Inside folder `pentaho-server/pentaho-solutions/system`  
+
+Create a new file as `applicationContext-spring-security-embed.xml` and copy the following code to inject the `<bean>` calls.  
 
 ##### applicationContext-spring-security-embed.xml 
 - EmbedRestTemplate 
@@ -40,8 +55,8 @@ Criar um arquivo .xml contendo as injeções por `<bean>`
 
 	<bean id="embedRestTemplate"
 		class="br.com.bovbi.embed.rest.EmbedRestTemplate">
-   		<constructor-arg index = "0" value = "http://localhost:3000"/> 
-      <constructor-arg index = "1" value = ""/>
+   		<constructor-arg index="0" value="http://localhost:3000"/> 
+      <constructor-arg index="1" value=""/>
 	</bean>
 
 	<bean id="embedAuthenticationProvider"
@@ -67,14 +82,16 @@ Criar um arquivo .xml contendo as injeções por `<bean>`
 </beans>
 ````
 
-Criado esse arquivo então é necessario importa eles no .xml `pentaho-spring-beans.xml`  
+Inject the new file in the ending of `pentaho-spring-beans.xml` to be imported.
 
 ````xml
   <import resource="applicationContext-spring-security-embed.xml" />
 ````
 
-Faltando agora injetar agora o nosso Filtro de Login, iremos editar o arquivo `applicationContext-spring-security.xml`  
-Primeiramente iremos adicionar uma tag `<bean>` contendo:
+To inject the Login Filter, edit the file `applicationContext-spring-security.xml`
+
+First add a `<bean>` tag containing:
+
 ````xml
   <bean id="embedLoginFilter" class="br.com.bovbi.embed.filter.EmbedLoginFilter">
     <constructor-arg ref="authenticationManager" />
@@ -84,12 +101,12 @@ Primeiramente iremos adicionar uma tag `<bean>` contendo:
       </bean>
     </property>
   </bean>
-````  
-* Vale observar a presenção da property *targetUrlParameter* apontando a URL a ser redirecionada nossa chamada após o login com sucesso.
+````
 
+* It's worth noting the presence of the property `targetUrlParameter` pointing the URL to be redirected after successful login.
 
-Agora precisamos adicionar nosso bean `embedLoginFilter` dentro da cadeia de filtros  
-Localize a definição do bean `filterChainProxy`
+Add the `embedLoginFilter` bean inside the filter chain locate in the `filterChainProxy` bean definition
+
 ````xml
   <bean id="filterChainProxy" class="org.springframework.security.web.FilterChainProxy">
     <constructor-arg>
@@ -98,17 +115,19 @@ Localize a definição do bean `filterChainProxy`
              ...
 ````  
 
-Na cadeia de filtros com `pattern="/**"` adicionar o `embedLoginFilter`   
-Atenção na posição, pois é possível ter filtros que alteram o fluxo da requisição!    
-Adicione o `embedLoginFilter` antes dos `filterInvocationInterceptor`
+In the filter chain with `pattern="/**"` add `embedLoginFilter`
+- Attention to the position, because it is possible to have filters that alter the flow of the request!
+- Add the `embedLoginFilter` before the `filterInvocationInterceptor`
+
 ````xml
      <sec:filter-chain
                     pattern="/**" 
                     filters="..., embedLoginFilter, filterInvocationInterceptor" />
 ````
 
-Após a injeção do `embedLoginFilter` na cadeia de filtros, iremos alterar a injeção do ProviderManager para adicionar na lista de providers o  `EmbedAuthenticationProvider`  
-Localize a definição do bean `authenticationManager`
+After injecting `embedLoginFilter` into the filter `filterChainProxy`, change the injection of ProviderManager to add `EmbedAuthenticationProvider` to the list of providers.
+- Locate the `authenticationManager` bean definition
+
 ````xml
   <bean id="authenticationManager" class="org.springframework.security.authentication.ProviderManager">
     <constructor-arg>
@@ -118,8 +137,8 @@ Localize a definição do bean `authenticationManager`
          ...
 ````
 
-Na lista sendo injetada dentro do construtor, `<constructor-arg>`, adicione o bean AuthenticationProvider do embed na primeira posição  
-Deverá ficar assim:
+In the list being injected into the constructor, `<constructor-arg>`, add the bean `AuthenticationProvider` from embed in the first position
+- It should look like this
 ````xml
   <bean id="authenticationManager" class="org.springframework.security.authentication.ProviderManager">
     <constructor-arg>
@@ -135,9 +154,8 @@ Deverá ficar assim:
       ...
 ````
 
-Iremos agora adicionar o `embedUserDetailsService` dentro da lista dos services do pentaho.  
-Dentro do arquivo `pentahoObjects.spring.xml`  
-Localize a definição do bean `UserDetailsService`
+Inside the file `pentahoObjects.spring.xml` locate the `UserDetailsService` bean definition
+
 ````xml
   <bean id="UserDetailsService" class="org.pentaho.platform.plugin.services.security.userrole.ChainedUserDetailsService">
     <constructor-arg>
@@ -148,8 +166,8 @@ Localize a definição do bean `UserDetailsService`
     </constructor-arg>
   </bean>
 ````
-
-Adicione então dentro da lista a referência do bean `embedUserDetailsService`  
+Add `embedUserDetailsService` to the list of pentaho services
+- It should look like this 
 ```xml
   <bean id="UserDetailsService" class="org.pentaho.platform.plugin.services.security.userrole.ChainedUserDetailsService">
     <constructor-arg>
@@ -162,5 +180,20 @@ Adicione então dentro da lista a referência do bean `embedUserDetailsService`
   </bean>
 ```
 
-Restart the server and access the URL:
-* http://localhost:8080/pentaho/embed-login?token=12345&url=/plugin/pentaho-cdf-dd/api/renderer/cde-embed.js
+Restart the server and monitor the pentaho log file 
+
+```bash
+tail -n 300 -f tomcat/logs/catalina.out 
+```
+
+Wait for the follow messages to be sure that is all right!
+
+```bash
+br.com.bovbi.embed.rest.EmbedRestTemplate - on
+br.com.bovbi.embed.authentication.EmbedAuthenticationProvider - on
+br.com.bovbi.embed.service.EmbedUserDetailService - on
+br.com.bovbi.embed.filter.EmbedLoginFilter - on
+```
+
+Access the URL:
+* http://localhost:8080/pentaho/embed-login?token=12345&url=/api/repos/:public:Steel Wheels:Dashboards:CTools_dashboard.wcdf/generatedContent

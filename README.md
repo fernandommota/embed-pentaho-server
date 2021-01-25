@@ -15,10 +15,6 @@ This project it's a sample of how embed the Pentaho server with a 3rd Web APP us
 Original code by Francisco Gregorio:
 * https://github.com/FranciscoGregorio
 
-Original sponsors:
-* Tribunal de Contas do Estado de Mato Grosso do Sul (TCE-MS)
-* Grupo Imagetech
-
 
 ## Flow Authentication
 1. Authentication filter by token ([EmbedLoginFilter](src/main/java/br/com/bovbi/embed/filter/EmbedLoginFilter.java))
